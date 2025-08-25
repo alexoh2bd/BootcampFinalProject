@@ -10,6 +10,8 @@ import json
 from dotenv import load_dotenv
 from textblob import TextBlob
 from typing import List, Dict, Optional
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer as SIA
+
 
 # Load environment variables
 load_dotenv()
@@ -77,7 +79,7 @@ class AINewsAnalyzer:
             print(f"Request failed: {e}")
             return []
     
-    def analyze_sentiment(self, text: str) -> Dict:
+    def analyze_sentiment(self, text: str, model: str) -> Dict:
         """
         Analyze sentiment of given text using TextBlob
         
@@ -94,30 +96,39 @@ class AINewsAnalyzer:
                 'label': 'neutral',
                 'confidence': 0.0
             }
-        
         blob = TextBlob(text)
-        polarity = blob.sentiment.polarity
         subjectivity = blob.sentiment.subjectivity
-        
-        # Determine sentiment label
-        if polarity > 0.1:
+
+        # implement Vader Analysis for polarity scores
+        if model == "Vader":
+            vader = SIA()
+            fullpolarity = vader.polarity_scores(text)
+            polarity=fullpolarity['compound']
+            polarity_thresh = 0.05
+        # otherwise 
+        else:
+            polarity = blob.sentiment.polarity
+            polarity_thresh = 0.1
+
+        # Determine sentiment label through polarity threshold
+        if polarity > polarity_thresh:
             label = 'positive'
-        elif polarity < -0.1:
+        elif polarity < -polarity_thresh:
             label = 'negative'
         else:
             label = 'neutral'
         
+        
         # Calculate confidence (distance from neutral)
         confidence = abs(polarity)
-        
-        return {
+        res = {
             'polarity': polarity,
             'subjectivity': subjectivity,
             'label': label,
             'confidence': confidence
         }
-    
-    def process_news_articles(self, articles: List[Dict]) -> pd.DataFrame:
+        return res
+    def process_news_articles(self, articles: List[Dict], model: str) -> pd.DataFrame:
         """
         Process news articles and add sentiment analysis
         
@@ -135,15 +146,14 @@ class AINewsAnalyzer:
                 continue
             
             # Analyze sentiment of title and description
-            title_sentiment = self.analyze_sentiment(article['title'])
-            description_sentiment = self.analyze_sentiment(article.get('description', ''))
+            title_sentiment = self.analyze_sentiment(article['title'], model=model)
+            description_sentiment = self.analyze_sentiment(article['description'], model=model)
             
             # Combine title and description sentiment (weighted toward title)
             combined_polarity = (title_sentiment['polarity'] * 0.7 + 
                                description_sentiment['polarity'] * 0.3)
             combined_subjectivity = (title_sentiment['subjectivity'] * 0.7 + 
                                    description_sentiment['subjectivity'] * 0.3)
-            
             # Determine overall sentiment
             if combined_polarity > 0.1:
                 overall_sentiment = 'positive'
@@ -183,7 +193,8 @@ class AINewsAnalyzer:
     def get_ai_news_with_sentiment(self, 
                                    query: str = "artificial intelligence",
                                    days: int = 7,
-                                   sources: Optional[str] = None) -> pd.DataFrame:
+                                   sources: Optional[str] = None,
+                                   model: str = "Textblob") -> pd.DataFrame:
         """
         Complete pipeline: fetch news and analyze sentiment
         
@@ -207,26 +218,10 @@ class AINewsAnalyzer:
         print(f"Found {len(articles)} articles. Analyzing sentiment...")
         
         # Process and analyze
-        df = self.process_news_articles(articles)
+        df = self.process_news_articles(articles, model=model)
         
-        print(f"Processed {len(df)} articles with sentiment analysis.")
+        print(f"Processed {len(df)} articles with sentiment analysis. \nUsed {model} for polarity analysis and Textblob for sentiment analysis.")
         return df
-
-def fetch_ai_news(query="artificial intelligence", days=7, sources=None):
-    """Standalone function to fetch AI news"""
-    analyzer = AINewsAnalyzer()
-    return analyzer.fetch_ai_news(query, days, sources=sources)
-
-def analyze_sentiment(text):
-    """Standalone function to analyze sentiment"""
-    analyzer = AINewsAnalyzer()
-    return analyzer.analyze_sentiment(text)
-
-def get_ai_news_with_sentiment(query="artificial intelligence", days=7, sources=None):
-    """Standalone function for complete pipeline"""
-    analyzer = AINewsAnalyzer()
-    return analyzer.get_ai_news_with_sentiment(query, days, sources)
-
 def load_config():
     """Load configuration from config.json"""
     with open('config.json', 'r') as f:
@@ -247,8 +242,7 @@ if __name__ == "__main__":
     for text in test_texts:
         sentiment = analyzer.analyze_sentiment(text)
         print(f"Text: {text}")
-        print(f"Sentiment: {sentiment['label']} (polarity: {sentiment['polarity']:.2f})")
-        print()
+        print(f"Sentiment: {sentiment['label']} (polarity: {sentiment['polarity']:.2f}\n")
     
     # Test news fetching
     print("Fetching recent AI news...")

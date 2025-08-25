@@ -21,7 +21,7 @@ st.set_page_config(
 
 # Custom CSS for better styling
 st.markdown("""
-<style>
+<style> 
     .main-header {
         font-size: 2.5rem;
         font-weight: bold;
@@ -48,11 +48,11 @@ def load_config():
         return json.load(f)
 
 @st.cache_data(ttl=1800)  # Cache for 30 minutes
-def load_news_data(query, days, sources=None):
+def load_news_data(query, days, sources=None, model="TextBlob"):
     """Load and cache news data"""
     try:
         analyzer = AINewsAnalyzer()
-        df = analyzer.get_ai_news_with_sentiment(query=query, days=days, sources=sources)
+        df = analyzer.get_ai_news_with_sentiment(query=query, days=days, sources=sources, model=model)
         return df, None
     except Exception as e:
         return pd.DataFrame(), str(e)
@@ -107,7 +107,7 @@ def create_source_analysis(df):
     
     return fig
 
-def create_polarity_distribution(df):
+def create_polarity_distribution(df, thresh: float):
     """Create sentiment polarity distribution"""
     if df.empty:
         return None
@@ -121,10 +121,9 @@ def create_polarity_distribution(df):
     )
     
     # Add vertical lines for sentiment boundaries
-    fig.add_vline(x=0.1, line_dash="dash", line_color="green", annotation_text="Positive Threshold")
-    fig.add_vline(x=-0.1, line_dash="dash", line_color="red", annotation_text="Negative Threshold")
-    fig.add_vline(x=0, line_dash="dash", line_color="gray", annotation_text="Neutral")
-    
+    fig.add_vline(x=thresh, line_dash="dash", line_color="green", annotation_text="Positive Threshold", annotation_position="top right")
+    fig.add_vline(x=-thresh, line_dash="dash", line_color="red", annotation_text="Negative Threshold", annotation_position="top left")
+    fig.add_vline(x=0, line_dash="dash", line_color="gray", annotation_text="Neutral", annotation_position="top")
     return fig
 
 
@@ -151,6 +150,12 @@ def main():
     custom_query = st.sidebar.text_input(
         "Or enter custom search:",
         placeholder="e.g., 'generative AI'"
+    )
+
+    model_query = st.sidebar.selectbox(
+        "📝 Search a Sentiment Model:",
+        options=config["model_options"],
+        index=0
     )
     
     # Use custom query if provided
@@ -188,7 +193,7 @@ def main():
     # Load data
     if st.sidebar.button("🚀 Analyze News", type="primary"):
         with st.spinner(f"Fetching and analyzing news about '{final_query}'..."):
-            df, error = load_news_data(final_query, days, sources)
+            df, error = load_news_data(final_query, days, sources=sources, model=model_query)
             
             if error:
                 st.error(f"Error loading data: {error}")
@@ -203,105 +208,105 @@ def main():
             st.session_state.query = final_query
             st.session_state.days = days
 
-# ===== Display results if data is available =====
-if 'df' in st.session_state and not st.session_state.df.empty:
-    df = st.session_state.df
+    # ===== Display results if data is available =====
+    if 'df' in st.session_state and not st.session_state.df.empty:
+        df = st.session_state.df
 
-    # ===== Summary Metrics =====
-    st.markdown("### 📊 Analysis Summary")
-    col1, col2, col3, col4 = st.columns(4)
+        # ===== Summary Metrics =====
+        st.markdown("### 📊 Analysis Summary")
+        col1, col2, col3, col4 = st.columns(4)
 
-    with col1:
-        st.metric("📰 Total Articles", len(df))
-    with col2:
-        avg_polarity = df['sentiment_polarity'].mean()
-        delta_polarity = f"{avg_polarity:+.3f}"
-        st.metric("🎭 Avg Sentiment", f"{avg_polarity:.3f}", delta_polarity)
-    with col3:
-        positive_pct = (len(df[df['sentiment_label'] == 'positive']) / len(df) * 100)
-        st.metric("😊 Positive %", f"{positive_pct:.1f}%")
-    with col4:
-        unique_sources = df['source'].nunique()
-        st.metric("📺 News Sources", unique_sources)
+        with col1:
+            st.metric("📰 Total Articles", len(df))
+        with col2:
+            avg_polarity = df['sentiment_polarity'].mean()
+            delta_polarity = f"{avg_polarity:+.3f}"
+            st.metric("🎭 Avg Sentiment", f"{avg_polarity:.3f}", delta_polarity)
+        with col3:
+            positive_pct = (len(df[df['sentiment_label'] == 'positive']) / len(df) * 100)
+            st.metric("😊 Positive %", f"{positive_pct:.1f}%")
+        with col4:
+            unique_sources = df['source'].nunique()
+            st.metric("📺 News Sources", unique_sources)
 
 
-    # ===== Charts =====
-    st.markdown("### 📈 Visual Analysis")
-    col1, col2 = st.columns(2)
+        # ===== Charts =====
+        st.markdown("### 📈 Visual Analysis")
+        col1, col2 = st.columns(2)
 
-    # Sentiment Distribution
-    dist_fig = create_sentiment_distribution(df)
-    if dist_fig:
-        st.plotly_chart(dist_fig, use_container_width=True, key="dist_fig")
-        # Export buttons
-        buf = io.BytesIO()
-        dist_fig.update_layout(template="plotly_white")
-        dist_fig.update_layout(plot_bgcolor='white', paper_bgcolor='white')  # 设置白底
-        dist_fig.write_image(buf, format="png", engine="kaleido")
-        st.download_button("📷 Download Distribution Chart as PNG", buf.getvalue(),
-                        "distribution_chart.png", mime="image/png")
-        st.download_button("🌐 Download Distribution Chart as HTML",
-                        dist_fig.to_html().encode("utf-8"), "distribution_chart.html",
-                        mime="text/html")
+        # Sentiment Distribution
+        dist_fig = create_sentiment_distribution(df)
+        if dist_fig:
+            st.plotly_chart(dist_fig, use_container_width=True, key="dist_fig")
+            # Export buttons
+            buf = io.BytesIO()
+            dist_fig.update_layout(template="plotly_white")
+            dist_fig.update_layout(plot_bgcolor='white', paper_bgcolor='white')  # 设置白底
+            dist_fig.write_image(buf, format="png", engine="kaleido")
+            st.download_button("📷 Download Distribution Chart as PNG", buf.getvalue(),
+                            "distribution_chart.png", mime="image/png")
+            st.download_button("🌐 Download Distribution Chart as HTML",
+                            dist_fig.to_html().encode("utf-8"), "distribution_chart.html",
+                            mime="text/html")
 
-    # Source Analysis
-    source_fig = create_source_analysis(df)
-    if source_fig:
-        st.plotly_chart(source_fig, use_container_width=True, key="source_fig")
-        buf = io.BytesIO()
-        source_fig.update_layout(template="plotly_white")
-        source_fig.update_layout(plot_bgcolor='white', paper_bgcolor='white')  # 白底
-        source_fig.write_image(buf, format="png", engine="kaleido")
-        st.download_button("📷 Download Source Chart as PNG", buf.getvalue(),
-                        "source_chart.png", mime="image/png")
-        st.download_button("🌐 Download Source Chart as HTML",
-                        source_fig.to_html().encode("utf-8"), "source_chart.html",
-                        mime="text/html")
+        # Source Analysis
+        source_fig = create_source_analysis(df)
+        if source_fig:
+            st.plotly_chart(source_fig, use_container_width=True, key="source_fig")
+            buf = io.BytesIO()
+            source_fig.update_layout(template="plotly_white")
+            source_fig.update_layout(plot_bgcolor='white', paper_bgcolor='white')  # 白底
+            source_fig.write_image(buf, format="png", engine="kaleido")
+            st.download_button("📷 Download Source Chart as PNG", buf.getvalue(),
+                            "source_chart.png", mime="image/png")
+            st.download_button("🌐 Download Source Chart as HTML",
+                            source_fig.to_html().encode("utf-8"), "source_chart.html",
+                            mime="text/html")
 
-    # Polarity Distribution
-    polarity_fig = create_polarity_distribution(df)
-    if polarity_fig:
-        st.plotly_chart(polarity_fig, use_container_width=True, key="polarity_fig")
-        buf = io.BytesIO()
-        polarity_fig.update_layout(template="plotly_white")
-        polarity_fig.update_layout(plot_bgcolor='white', paper_bgcolor='white')  # 白底
-        polarity_fig.write_image(buf, format="png", engine="kaleido")
-        st.download_button("📷 Download Polarity Chart as PNG", buf.getvalue(),
-                        "polarity_chart.png", mime="image/png")
-        st.download_button("🌐 Download Polarity Chart as HTML",
-                        polarity_fig.to_html().encode("utf-8"), "polarity_chart.html",
-                        mime="text/html")
+        # Polarity Distribution
+        polarity_fig = create_polarity_distribution(df)
+        if polarity_fig:
+            st.plotly_chart(polarity_fig, use_container_width=True, key="polarity_fig")
+            buf = io.BytesIO()
+            polarity_fig.update_layout(template="plotly_white")
+            polarity_fig.update_layout(plot_bgcolor='white', paper_bgcolor='white')  # 白底
+            polarity_fig.write_image(buf, format="png", engine="kaleido")
+            st.download_button("📷 Download Polarity Chart as PNG", buf.getvalue(),
+                            "polarity_chart.png", mime="image/png")
+            st.download_button("🌐 Download Polarity Chart as HTML",
+                            polarity_fig.to_html().encode("utf-8"), "polarity_chart.html",
+                            mime="text/html")
 
-   
-    # ===== Export CSV button =====
-    csv_data = df.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        label="💾 Export Analysis as CSV",
-        data=csv_data,
-        file_name=f"ai_news_analysis_{st.session_state.query.replace(' ', '_')}.csv",
-        mime='text/csv'
-    )
-       
     
-else:
-    # Welcome message
-    st.info("👋 Welcome! Configure your analysis settings in the sidebar and click 'Analyze News' to get started.")
+        # ===== Export CSV button =====
+        csv_data = df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="💾 Export Analysis as CSV",
+            data=csv_data,
+            file_name=f"ai_news_analysis_{st.session_state.query.replace(' ', '_')}.csv",
+            mime='text/csv'
+        )
     
-    # Sample visualization or instructions
-    st.markdown("""
-    ### 🚀 How to Use:
-    
-    1. **Choose a topic** from the dropdown or enter your own search term
-    2. **Select time range** (1-30 days) to analyze recent news
-    3. **Pick news sources** or leave as 'All Sources' for comprehensive coverage
-    4. **Click 'Analyze News'** to fetch and analyze articles
-    
-    ### 📊 What You'll Get:
-    
-    - **Sentiment Analysis** of headlines and descriptions
-    - **Interactive Charts** showing trends over time
-    - **Source Breakdown** to see which outlets cover your topic
-    """)
+    else:
+        # Welcome message
+        st.info("👋 Welcome! Configure your analysis settings in the sidebar and click 'Analyze News' to get started.")
+        
+        # Sample visualization or instructions
+        st.markdown("""
+        ### 🚀 How to Use:
+        
+        1. **Choose a topic** from the dropdown or enter your own search term
+        2. **Select time range** (1-30 days) to analyze recent news
+        3. **Pick news sources** or leave as 'All Sources' for comprehensive coverage
+        4. **Click 'Analyze News'** to fetch and analyze articles
+        
+        ### 📊 What You'll Get:
+        
+        - **Sentiment Analysis** of headlines and descriptions
+        - **Interactive Charts** showing trends over time
+        - **Source Breakdown** to see which outlets cover your topic
+        """)
+    pass
 
 
 

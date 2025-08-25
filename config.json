@@ -28,5 +28,9 @@
     "AI breakthrough promises to revolutionize healthcare",
     "Concerns grow over AI job displacement",
     "New machine learning model shows mixed results"
+  ],
+  "model_options":[
+    "Vader",
+    "TextBlob"
   ]
 }
