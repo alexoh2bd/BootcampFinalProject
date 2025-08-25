@@ -56,7 +56,7 @@ An interactive web application that fetches the latest AI-related news and analy
 
 Run the Streamlit app:
 ```bash
-streamlit run streamlit_app.py
+streamlit run src/streamlit_app.py
 ```
 
 Then open your browser to `http://localhost:8501`
