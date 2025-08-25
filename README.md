@@ -15,7 +15,7 @@ An interactive web application that fetches the latest AI-related news and analy
 
 ## 🚀 Live Demo
 
-🌐 **Try it live**: [https://huggingface.co/spaces/jonasneves/BootcampFinalProject](https://huggingface.co/spaces/jonasneves/BootcampFinalProject)
+🌐 **Try it live**: [https://huggingface.co/spaces/ai-sentiment-group/BootcampFinalProject](https://huggingface.co/spaces/ai-sentiment-group/BootcampFinalProject)
 
 ## 🛠️ Installation
 
