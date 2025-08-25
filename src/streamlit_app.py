@@ -8,6 +8,8 @@ import pandas as pd
 import plotly.express as px
 import json
 from api_handler import AINewsAnalyzer
+import io
+
 
 # Page configuration
 st.set_page_config(
@@ -205,53 +207,85 @@ def main():
             st.session_state.df = df
             st.session_state.query = final_query
             st.session_state.days = days
-    
-    # Display results if data is available
-    if 'df' in st.session_state:
+
+    # ===== Display results if data is available =====
+    if 'df' in st.session_state and not st.session_state.df.empty:
         df = st.session_state.df
-        
-        # Summary metrics
+
+        # ===== Summary Metrics =====
         st.markdown("### 📊 Analysis Summary")
         col1, col2, col3, col4 = st.columns(4)
-        
+
         with col1:
             st.metric("📰 Total Articles", len(df))
-        
         with col2:
             avg_polarity = df['sentiment_polarity'].mean()
             delta_polarity = f"{avg_polarity:+.3f}"
             st.metric("🎭 Avg Sentiment", f"{avg_polarity:.3f}", delta_polarity)
-        
         with col3:
             positive_pct = (len(df[df['sentiment_label'] == 'positive']) / len(df) * 100)
             st.metric("😊 Positive %", f"{positive_pct:.1f}%")
-        
         with col4:
             unique_sources = df['source'].nunique()
             st.metric("📺 News Sources", unique_sources)
-        
-        # Charts
+
+
+        # ===== Charts =====
         st.markdown("### 📈 Visual Analysis")
-        
-        # Row 1: Distribution and source analysis
         col1, col2 = st.columns(2)
-        
-        with col1:
-            dist_fig = create_sentiment_distribution(df)
-            if dist_fig:
-                st.plotly_chart(dist_fig, use_container_width=True)
-        
-        with col2:
-            source_fig = create_source_analysis(df)
-            if source_fig:
-                st.plotly_chart(source_fig, use_container_width=True)
-        
-        # Row 2: Polarity distribution (full width)
-        thresh = 0.05 if model_query == "Vader" else 0.1
-        polarity_fig = create_polarity_distribution(df, thresh=thresh)
+
+        # Sentiment Distribution
+        dist_fig = create_sentiment_distribution(df)
+        if dist_fig:
+            st.plotly_chart(dist_fig, use_container_width=True, key="dist_fig")
+            # Export buttons
+            buf = io.BytesIO()
+            dist_fig.update_layout(template="plotly_white")
+            dist_fig.update_layout(plot_bgcolor='white', paper_bgcolor='white')  # 设置白底
+            dist_fig.write_image(buf, format="png", engine="kaleido")
+            st.download_button("📷 Download Distribution Chart as PNG", buf.getvalue(),
+                            "distribution_chart.png", mime="image/png")
+            st.download_button("🌐 Download Distribution Chart as HTML",
+                            dist_fig.to_html().encode("utf-8"), "distribution_chart.html",
+                            mime="text/html")
+
+        # Source Analysis
+        source_fig = create_source_analysis(df)
+        if source_fig:
+            st.plotly_chart(source_fig, use_container_width=True, key="source_fig")
+            buf = io.BytesIO()
+            source_fig.update_layout(template="plotly_white")
+            source_fig.update_layout(plot_bgcolor='white', paper_bgcolor='white')  # 白底
+            source_fig.write_image(buf, format="png", engine="kaleido")
+            st.download_button("📷 Download Source Chart as PNG", buf.getvalue(),
+                            "source_chart.png", mime="image/png")
+            st.download_button("🌐 Download Source Chart as HTML",
+                            source_fig.to_html().encode("utf-8"), "source_chart.html",
+                            mime="text/html")
+
+        # Polarity Distribution
+        polarity_fig = create_polarity_distribution(df)
         if polarity_fig:
-            st.plotly_chart(polarity_fig, use_container_width=True)
-        
+            st.plotly_chart(polarity_fig, use_container_width=True, key="polarity_fig")
+            buf = io.BytesIO()
+            polarity_fig.update_layout(template="plotly_white")
+            polarity_fig.update_layout(plot_bgcolor='white', paper_bgcolor='white')  # 白底
+            polarity_fig.write_image(buf, format="png", engine="kaleido")
+            st.download_button("📷 Download Polarity Chart as PNG", buf.getvalue(),
+                            "polarity_chart.png", mime="image/png")
+            st.download_button("🌐 Download Polarity Chart as HTML",
+                            polarity_fig.to_html().encode("utf-8"), "polarity_chart.html",
+                            mime="text/html")
+
+    
+        # ===== Export CSV button =====
+        csv_data = df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="💾 Export Analysis as CSV",
+            data=csv_data,
+            file_name=f"ai_news_analysis_{st.session_state.query.replace(' ', '_')}.csv",
+            mime='text/csv'
+        )
     
     else:
         # Welcome message
@@ -272,6 +306,10 @@ def main():
         - **Interactive Charts** showing trends over time
         - **Source Breakdown** to see which outlets cover your topic
         """)
+    pass
+
+
+
 
 if __name__ == "__main__":
     main()
