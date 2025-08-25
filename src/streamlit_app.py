@@ -19,7 +19,7 @@ st.set_page_config(
 
 # Custom CSS for better styling
 st.markdown("""
-<style>
+<style> 
     .main-header {
         font-size: 2.5rem;
         font-weight: bold;
@@ -46,11 +46,11 @@ def load_config():
         return json.load(f)
 
 @st.cache_data(ttl=1800)  # Cache for 30 minutes
-def load_news_data(query, days, sources=None):
+def load_news_data(query, days, sources=None, model="TextBlob"):
     """Load and cache news data"""
     try:
         analyzer = AINewsAnalyzer()
-        df = analyzer.get_ai_news_with_sentiment(query=query, days=days, sources=sources)
+        df = analyzer.get_ai_news_with_sentiment(query=query, days=days, sources=sources, model=model)
         return df, None
     except Exception as e:
         return pd.DataFrame(), str(e)
@@ -105,7 +105,7 @@ def create_source_analysis(df):
     
     return fig
 
-def create_polarity_distribution(df):
+def create_polarity_distribution(df, thresh: float):
     """Create sentiment polarity distribution"""
     if df.empty:
         return None
@@ -119,10 +119,9 @@ def create_polarity_distribution(df):
     )
     
     # Add vertical lines for sentiment boundaries
-    fig.add_vline(x=0.1, line_dash="dash", line_color="green", annotation_text="Positive Threshold")
-    fig.add_vline(x=-0.1, line_dash="dash", line_color="red", annotation_text="Negative Threshold")
-    fig.add_vline(x=0, line_dash="dash", line_color="gray", annotation_text="Neutral")
-    
+    fig.add_vline(x=thresh, line_dash="dash", line_color="green", annotation_text="Positive Threshold", annotation_position="top right")
+    fig.add_vline(x=-thresh, line_dash="dash", line_color="red", annotation_text="Negative Threshold", annotation_position="top left")
+    fig.add_vline(x=0, line_dash="dash", line_color="gray", annotation_text="Neutral", annotation_position="top")
     return fig
 
 
@@ -149,6 +148,12 @@ def main():
     custom_query = st.sidebar.text_input(
         "Or enter custom search:",
         placeholder="e.g., 'generative AI'"
+    )
+
+    model_query = st.sidebar.selectbox(
+        "📝 Search a Sentiment Model:",
+        options=config["model_options"],
+        index=0
     )
     
     # Use custom query if provided
@@ -186,7 +191,7 @@ def main():
     # Load data
     if st.sidebar.button("🚀 Analyze News", type="primary"):
         with st.spinner(f"Fetching and analyzing news about '{final_query}'..."):
-            df, error = load_news_data(final_query, days, sources)
+            df, error = load_news_data(final_query, days, sources=sources, model=model_query)
             
             if error:
                 st.error(f"Error loading data: {error}")
@@ -242,7 +247,8 @@ def main():
                 st.plotly_chart(source_fig, use_container_width=True)
         
         # Row 2: Polarity distribution (full width)
-        polarity_fig = create_polarity_distribution(df)
+        thresh = 0.05 if model_query == "Vader" else 0.1
+        polarity_fig = create_polarity_distribution(df, thresh=thresh)
         if polarity_fig:
             st.plotly_chart(polarity_fig, use_container_width=True)
         
