@@ -6,6 +6,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 import os
+import json
 from dotenv import load_dotenv
 from textblob import TextBlob
 from typing import List, Dict, Optional
@@ -226,19 +227,21 @@ def get_ai_news_with_sentiment(query="artificial intelligence", days=7, sources=
     analyzer = AINewsAnalyzer()
     return analyzer.get_ai_news_with_sentiment(query, days, sources)
 
+def load_config():
+    """Load configuration from config.json"""
+    with open('config.json', 'r') as f:
+        return json.load(f)
+
 if __name__ == "__main__":
     # Test the API when run directly
     analyzer = AINewsAnalyzer()
+    config = load_config()
     
     print("Testing AI News Sentiment Analyzer...")
     print("=" * 50)
     
     # Test sentiment analysis
-    test_texts = [
-        "AI breakthrough promises to revolutionize healthcare",
-        "Concerns grow over AI job displacement",
-        "New machine learning model shows mixed results"
-    ]
+    test_texts = config["test_texts"]
     
     print("\nSentiment Analysis Examples:")
     for text in test_texts:

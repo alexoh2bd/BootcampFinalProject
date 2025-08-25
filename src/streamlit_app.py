@@ -6,6 +6,7 @@ Interactive dashboard for analyzing sentiment of AI-related news
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import json
 from api_handler import AINewsAnalyzer
 
 # Page configuration
@@ -37,6 +38,12 @@ st.markdown("""
     .neutral { color: #6c757d; }
 </style>
 """, unsafe_allow_html=True)
+
+@st.cache_data(ttl=1800)  # Cache for 30 minutes
+def load_config():
+    """Load configuration from config.json"""
+    with open('config.json', 'r') as f:
+        return json.load(f)
 
 @st.cache_data(ttl=1800)  # Cache for 30 minutes
 def load_news_data(query, days, sources=None):
@@ -124,22 +131,14 @@ def main():
     st.markdown("<h1 class='main-header'>🤖 AI News Sentiment Analyzer</h1>", unsafe_allow_html=True)
     st.markdown("### Discover the sentiment trends in AI-related news from around the world")
     
+    # Load configuration
+    config = load_config()
+    
     # Sidebar controls
     st.sidebar.header("🔧 Analysis Settings")
     
     # Query input
-    query_options = [
-        "artificial intelligence",
-        "machine learning", 
-        "ChatGPT",
-        "OpenAI",
-        "deep learning",
-        "neural networks",
-        "AI ethics",
-        "robotics",
-        "computer vision",
-        "natural language processing"
-    ]
+    query_options = config["search_queries"]
     
     selected_query = st.sidebar.selectbox(
         "📝 Search Topic:",
@@ -164,28 +163,23 @@ def main():
         help="How many days back to search for news"
     )
     
-    # News sources (confirmed available in NewsAPI)
-    popular_sources = [
-        "techcrunch,wired,ars-technica,the-verge,engadget",
-        "reuters,associated-press,bbc-news",
-        "cnn,fox-news,abc-news", 
-        "financial-times,wall-street-journal,bloomberg"
-    ]
+    # News sources from config
+    news_sources = config["news_sources"]
     
     source_option = st.sidebar.selectbox(
         "📰 Source Category:",
-        options=["All Sources", "Tech Media", "General News", "US News", "Financial News"],
+        options=config["source_categories"],
         index=0
     )
     
     if source_option == "Tech Media":
-        sources = popular_sources[0]
+        sources = news_sources["tech_media"]
     elif source_option == "General News":
-        sources = popular_sources[1]
+        sources = news_sources["general_news"]
     elif source_option == "US News":
-        sources = popular_sources[2]
+        sources = news_sources["us_news"]
     elif source_option == "Financial News":
-        sources = popular_sources[3]
+        sources = news_sources["financial_news"]
     else:
         sources = None
     

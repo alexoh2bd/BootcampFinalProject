@@ -1,0 +1,32 @@
+{
+  "search_queries": [
+    "artificial intelligence",
+    "machine learning",
+    "ChatGPT",
+    "OpenAI",
+    "deep learning",
+    "neural networks",
+    "AI ethics",
+    "robotics",
+    "computer vision",
+    "natural language processing"
+  ],
+  "news_sources": {
+    "tech_media": "techcrunch,wired,ars-technica,the-verge,engadget",
+    "general_news": "reuters,associated-press,bbc-news",
+    "us_news": "cnn,fox-news,abc-news",
+    "financial_news": "financial-times,wall-street-journal,bloomberg"
+  },
+  "source_categories": [
+    "All Sources",
+    "Tech Media",
+    "General News",
+    "US News",
+    "Financial News"
+  ],
+  "test_texts": [
+    "AI breakthrough promises to revolutionize healthcare",
+    "Concerns grow over AI job displacement",
+    "New machine learning model shows mixed results"
+  ]
+}
