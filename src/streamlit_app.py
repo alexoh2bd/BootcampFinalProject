@@ -242,7 +242,13 @@ def main():
             buf = io.BytesIO()
             dist_fig.update_layout(template="plotly_white")
             dist_fig.update_layout(plot_bgcolor='white', paper_bgcolor='white')  # 设置白底
-            dist_fig.write_image(buf, format="png", engine="kaleido")
+            try:
+                dist_fig.write_image(buf, format="png", engine="kaleido")
+            except RuntimeError:
+                # Fallback if Chrome/Kaleido not available
+                html_buf = io.StringIO()
+                dist_fig.write_html(html_buf)
+                buf = io.BytesIO(html_buf.getvalue().encode('utf-8'))
             st.download_button("📷 Download Distribution Chart as PNG", buf.getvalue(),
                             "distribution_chart.png", mime="image/png")
             st.download_button("🌐 Download Distribution Chart as HTML",
@@ -256,7 +262,13 @@ def main():
             buf = io.BytesIO()
             source_fig.update_layout(template="plotly_white")
             source_fig.update_layout(plot_bgcolor='white', paper_bgcolor='white')  # 白底
-            source_fig.write_image(buf, format="png", engine="kaleido")
+            try:
+                source_fig.write_image(buf, format="png", engine="kaleido")
+            except RuntimeError:
+                # Fallback if Chrome/Kaleido not available
+                html_buf = io.StringIO()
+                source_fig.write_html(html_buf)
+                buf = io.BytesIO(html_buf.getvalue().encode('utf-8'))
             st.download_button("📷 Download Source Chart as PNG", buf.getvalue(),
                             "source_chart.png", mime="image/png")
             st.download_button("🌐 Download Source Chart as HTML",
@@ -264,13 +276,19 @@ def main():
                             mime="text/html")
 
         # Polarity Distribution
-        polarity_fig = create_polarity_distribution(df)
+        polarity_fig = create_polarity_distribution(df, 0.1)
         if polarity_fig:
             st.plotly_chart(polarity_fig, use_container_width=True, key="polarity_fig")
             buf = io.BytesIO()
             polarity_fig.update_layout(template="plotly_white")
             polarity_fig.update_layout(plot_bgcolor='white', paper_bgcolor='white')  # 白底
-            polarity_fig.write_image(buf, format="png", engine="kaleido")
+            try:
+                polarity_fig.write_image(buf, format="png", engine="kaleido")
+            except RuntimeError:
+                # Fallback if Chrome/Kaleido not available
+                html_buf = io.StringIO()
+                polarity_fig.write_html(html_buf)
+                buf = io.BytesIO(html_buf.getvalue().encode('utf-8'))
             st.download_button("📷 Download Polarity Chart as PNG", buf.getvalue(),
                             "polarity_chart.png", mime="image/png")
             st.download_button("🌐 Download Polarity Chart as HTML",

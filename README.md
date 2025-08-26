@@ -67,19 +67,19 @@ For quick sentiment analysis:
 
 ```bash
 # Basic usage
-python cli_demo.py
+python src/cli_demo.py
 
 # Custom search query
-python cli_demo.py --query "ChatGPT" --days 3
+python src/cli_demo.py --query "ChatGPT" --days 3
 
 # Filter to specific sources
-python cli_demo.py --sources "techcrunch,wired" --max-articles 5
+python src/cli_demo.py --sources "techcrunch,wired" --max-articles 5
 
 # Show only positive articles
-python cli_demo.py --positive-only
+python src/cli_demo.py --positive-only
 
 # Show detailed sentiment analysis
-python cli_demo.py --sentiment-only
+python src/cli_demo.py --sentiment-only
 ```
 
 #### CLI Options
