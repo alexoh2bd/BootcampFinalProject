@@ -26,7 +26,7 @@ class AINewsAnalyzer:
     
     def fetch_ai_news(self, 
                       query: str = "artificial intelligence", 
-                      days: int = 7, 
+                      days: tuple[int] = (7,14), 
                       language: str = "en",
                       sources: Optional[str] = None,
                       page_size: int = 100) -> List[Dict]:
@@ -44,9 +44,11 @@ class AINewsAnalyzer:
             List of news articles with metadata
         """
         # Calculate date range
-        to_date = datetime.now()
-        from_date = to_date - timedelta(days=days)
+        today = datetime.now()
+        from_date = today - timedelta(days=days[0]) # 7 
+        to_date = today - timedelta(days=days[1]) # 14
         
+        print(from_date, to_date)
         # Prepare API parameters
         params = {
             'q': query,
@@ -192,7 +194,7 @@ class AINewsAnalyzer:
     
     def get_ai_news_with_sentiment(self, 
                                    query: str = "artificial intelligence",
-                                   days: int = 7,
+                                   days: tuple[int] = (7,14),
                                    sources: Optional[str] = None,
                                    model: str = "Textblob") -> pd.DataFrame:
         """
