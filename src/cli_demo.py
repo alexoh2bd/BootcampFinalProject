@@ -143,7 +143,7 @@ def main():
         # Fetch and analyze news
         df = analyzer.get_ai_news_with_sentiment(
             query=args.query,
-            days=args.days,
+            days=(args.days, 0),  # Convert single int to tuple (days_back, days_forward)
             sources=args.sources
         )
         
