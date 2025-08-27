@@ -45,8 +45,12 @@ class AINewsAnalyzer:
         """
         # Calculate date range
         today = datetime.now()
-        from_date = today - timedelta(days=days[0]) # 7 
-        to_date = today - timedelta(days=days[1]) # 14
+        from_date = today - timedelta(days=days[0]) # days back from today
+        to_date = today - timedelta(days=days[1]) # end date (0 = today)
+        
+        # Ensure from_date is earlier than to_date
+        if from_date > to_date:
+            from_date, to_date = to_date, from_date
         
         print(from_date, to_date)
         # Prepare API parameters
