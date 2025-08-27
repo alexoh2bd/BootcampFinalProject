@@ -166,14 +166,14 @@ def main():
         "📅 Days to analyze:",
         min_value=1,
         max_value=30,
-        value=7,
+        value=(7,14),
         help="How many days back to search for news"
     )
 
-    # Date range filter (optional, after data is loaded)
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("#### Optional: Filter by Date Range")
-    date_range = None
+    # # Date range filter (optional, after data is loaded)
+    # st.sidebar.markdown("---")
+    # st.sidebar.markdown("#### Optional: Filter by Date Range")
+
     
     # News sources from config
     news_sources = config["news_sources"]
@@ -198,7 +198,7 @@ def main():
     # Load data
     if st.sidebar.button("🚀 Analyze News", type="primary"):
         with st.spinner(f"Fetching and analyzing news about '{final_query}'..."):
-            df, error = load_news_data(final_query, days, sources=sources, model=model_query)
+            df, error = load_news_data(final_query, days=days, sources=sources, model=model_query)
             
             if error:
                 st.error(f"Error loading data: {error}")
@@ -217,22 +217,22 @@ def main():
     if 'df' in st.session_state and not st.session_state.df.empty:
         df = st.session_state.df
 
-        # Date range filter UI (if date column exists)
-        if 'published_at' in df.columns:
-            min_date = pd.to_datetime(df['published_at']).min().date()
-            max_date = pd.to_datetime(df['published_at']).max().date()
-            start_date, end_date = st.sidebar.date_input(
-                "Select date range:",
-                value=(min_date, max_date),
-                min_value=min_date,
-                max_value=max_date
-            )
-            # Filter DataFrame by date range
-            mask = (pd.to_datetime(df['published_at']).dt.date >= start_date) & (pd.to_datetime(df['published_at']).dt.date <= end_date)
-            df = df.loc[mask]
-            if df.empty:
-                st.warning("No articles found in the selected date range.")
-                st.stop()
+        # # Date range filter UI (if date column exists)
+        # if 'published_at' in df.columns:
+        #     min_date = pd.to_datetime(df['published_at']).min().date()
+        #     max_date = pd.to_datetime(df['published_at']).max().date()
+        #     start_date, end_date = st.sidebar.date_input(
+        #         "Select date range:",
+        #         value=(min_date, max_date),
+        #         min_value=min_date,
+        #         max_value=max_date
+        #     )
+        #     # Filter DataFrame by date range
+        #     mask = (pd.to_datetime(df['published_at']).dt.date >= start_date) & (pd.to_datetime(df['published_at']).dt.date <= end_date)
+        #     df = df.loc[mask]
+        #     if df.empty:
+        #         st.warning("No articles found in the selected date range.")
+        #         st.stop()
 
         # ===== Summary Metrics =====
         st.markdown("### 📊 Analysis Summary")
