@@ -56,11 +56,7 @@ An interactive web application that fetches the latest AI-related news and analy
 
 Run the Streamlit app:
 ```bash
-<<<<<<< HEAD
 streamlit run src/streamlit_app.py
-=======
-streamlit run streamlit_app.py
->>>>>>> huggingface/main
 ```
 
 Then open your browser to `http://localhost:8501`
@@ -111,11 +107,7 @@ flowchart TB
     end
     
     subgraph Processing["🧠 Data Processing"]
-<<<<<<< HEAD
         F["TextBlob + VADER<br/>Sentiment Engines"]
-=======
-        F["TextBlob<br/>Sentiment Engine"]
->>>>>>> huggingface/main
         G["Plotly<br/>Visualizations"]
         H["Pandas<br/>Data Processing"]
     end
