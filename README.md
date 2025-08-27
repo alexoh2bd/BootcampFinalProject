@@ -127,17 +127,10 @@ flowchart TB
     C --> I
     C --> J
     
-<<<<<<< HEAD
     classDef frontend fill:#1f6feb,stroke:#58a6ff,stroke-width:2px,color:#f0f6fc
     classDef application fill:#2ea043,stroke:#3fb950,stroke-width:2px,color:#f0f6fc
     classDef processing fill:#a371f7,stroke:#d2a8ff,stroke-width:2px,color:#f0f6fc
     classDef external fill:#f85149,stroke:#ff7b72,stroke-width:2px,color:#f0f6fc
-=======
-    classDef frontend fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    classDef application fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    classDef processing fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    classDef external fill:#fce4ec,stroke:#c2185b,stroke-width:2px
->>>>>>> huggingface/main
     
     class A,B frontend
     class C,D,E application
